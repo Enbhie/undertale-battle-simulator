@@ -127,8 +127,6 @@ with open(args.datafile, "wb") as f:
     f.write(data_bin)
 with open(args.constfile, "w") as f:
     f.write("""
-; This file was generated
-
 ; background image constant
 """)
     i = 0

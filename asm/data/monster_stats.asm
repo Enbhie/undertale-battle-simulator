@@ -1,6 +1,4 @@
 
-; this file was generated
-
 .segment "MONSTER_STRUCT_DATA"
 
 ;--------------------------------

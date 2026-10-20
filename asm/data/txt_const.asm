@@ -1,5 +1,3 @@
-; This file was generated
-
 ; Text constants:
     TXT_DUMMY_RND_1 = 0
     TXT_DUMMY_RND_2 = 47
@@ -14,7 +12,7 @@
     TXT_FROGGIT_START = 548
     TXT_FROGGIT_CHECK = 573
     TXT_FROGGIT_ACT_COMPLIMENT = 638
-    TXT_ITEM_1 = 733
-    TXT_START_1 = 761
-    TXT_START_2 = 779
-    TXT_START_3 = 802
+    TXT_ITEM_1 = 712
+    TXT_START_1 = 740
+    TXT_START_2 = 758
+    TXT_START_3 = 781

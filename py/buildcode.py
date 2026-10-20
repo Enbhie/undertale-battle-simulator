@@ -28,8 +28,6 @@ def asm_struct_file(struct_list):
     struct_list = dict(sorted(struct_list.items(), key=lambda x: x[0]))
 
     asm_file = """
-; this file was generated
-
 .segment "MONSTER_DATA"
 ;--------------------------------
 ; Array: monster_code_bnk
@@ -89,8 +87,6 @@ monster_code_struct:
 def asm_inc_file(struct_list):
     # file header
     asm_file = """
-; this file was generated
-
 .segment "MONSTER_CODE_DATA"
 
 monster_code_data:

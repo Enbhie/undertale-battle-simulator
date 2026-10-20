@@ -72,8 +72,6 @@ for fn in csv_filenames:
 #
 with open(args.animout, "w") as f:
     f.write("""
-; this file was generated
-
 .segment "MONSTER_ANIM_DATA"
 
 anim_data:
@@ -94,8 +92,6 @@ anim_data:
 with open(args.constout, "w") as f:
     f.write(
         """
-; this file was generated
-
 ; background anim constants:
 """
     )

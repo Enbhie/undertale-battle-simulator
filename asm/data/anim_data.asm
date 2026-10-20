@@ -1,6 +1,4 @@
 
-; this file was generated
-
 .segment "MONSTER_ANIM_DATA"
 
 anim_data:
@@ -11,7 +9,7 @@ anim_data:
     .byte 240, 24, 0, 0 ; x, y, delay, type
     .word IMG_DATA_MONSTERS_EMBER_EMBER_BOSS, 0 ; img, next
     ; ANIM_DATA_MONSTERS_FROGGIT_FROGGIT_BKG
-    .byte 0, 0, 0, 0 ; x, y, delay, type
+    .byte 232, 0, 0, 0 ; x, y, delay, type
     .word IMG_DATA_MONSTERS_FROGGIT_FROGGIT, 0 ; img, next
     ; ANIM_DATA_MONSTERS_TESTOBUG_ANIMS_BKG_1
     .byte 248, 0, 60, 0 ; x, y, delay, type

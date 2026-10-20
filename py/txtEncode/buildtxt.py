@@ -38,6 +38,6 @@ printv(f"writing results...", param="t", v=V_INFO)
 with open(args.txtout, "wb") as f:
     f.write(alltxt)
 with open(args.constout, "w") as f:
-    f.write(f"; This file was generated\n\n; Text constants:\n")
+    f.write(f"; Text constants:\n")
     for name, val in allconst.items():
         f.write(f"    {name} = {val}\n")

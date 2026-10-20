@@ -17,8 +17,6 @@ n = 0
 
 # file header
 asm_file = """
-; this file was generated
-
 .segment "MONSTER_STRUCT_DATA"
 
 ;--------------------------------

@@ -1,7 +1,4 @@
 
-; This file was generated
-
-
 .segment "TXT_BNK"
 text_data:
 .incbin "asm/data/txt.bin"

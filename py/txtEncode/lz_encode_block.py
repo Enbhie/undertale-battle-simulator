@@ -69,8 +69,6 @@ print("total size:", len(text) // 8, "bytes")
 write_bit_stream(text, args.output)
 with open(args.asmfile, "w") as f:
     f.write(f"""
-; This file was generated\n
-
 .segment "TXT_BNK"
 text_data:
 .incbin "{args.output}"

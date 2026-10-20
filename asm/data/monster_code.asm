@@ -1,6 +1,4 @@
 
-; this file was generated
-
 .segment "MONSTER_DATA"
 ;--------------------------------
 ; Array: monster_code_bnk

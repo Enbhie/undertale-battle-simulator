@@ -1,6 +1,4 @@
 
-; this file was generated
-
 ; background anim constants:
 ANIM_DATA_MONSTERS_DUMMY_NORMAL = 0
 ANIM_DATA_MONSTERS_EMBER_EMBER_BKG = 1

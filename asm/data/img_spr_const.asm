@@ -1,6 +1,4 @@
 
-; This file was generated
-
 ; sprites image constant
 IMG_DATA_MONSTERS_EMBER_EMBER_SPARK = _IMG_LAST_BKG + _IMG_LAST_BKG_CL + 0
 IMG_DATA_MONSTERS_TESTOBUG_ANIMS_SPR = _IMG_LAST_BKG + _IMG_LAST_BKG_CL + 1

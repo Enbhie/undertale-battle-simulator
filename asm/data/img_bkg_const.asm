@@ -1,6 +1,4 @@
 
-; This file was generated
-
 ; background image constant
 IMG_DATA_MONSTERS_DUMMY_DUMMY_0 = 0
 IMG_DATA_MONSTERS_EMBER_EMBER_BOSS = 1

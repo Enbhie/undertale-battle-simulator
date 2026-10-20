@@ -180,8 +180,6 @@ with open(args.datafile, "wb") as f:
         f.write(bytes(1024 - len(data_bin) % 1024))
 with open(args.constfile, "w") as f:
     f.write("""
-; This file was generated
-
 ; sprites image constant
 """)
     for i, data in enumerate(data_list):
