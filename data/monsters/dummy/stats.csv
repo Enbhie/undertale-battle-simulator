@@ -1,0 +1,21 @@
+id,2
+name,"Dummy   "
+maxhp,15
+hp,15
+atk,0
+def,-5
+xp,0
+gold,0
+item,0
+itemchance,0
+
+
+code,code.asm
+code_start,start
+code_turn,turn
+code_custom,custom
+code_hit,hit
+code_act,act
+code_item,item
+code_spare,spare
+code_flee,flee
