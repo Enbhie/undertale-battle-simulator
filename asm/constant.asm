@@ -632,5 +632,4 @@
     .enum HITBOX
         NONE
         FOLLOW_DIAMOND
-        FALLING_DIAMOND
     .endenum

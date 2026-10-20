@@ -216,9 +216,10 @@ m_3_act:
     RTS
 
 m_3_item:
+    JMP clear_event
 m_3_spare:
 m_3_flee:
-    JMP clear_event
+    JMP begin_battle_exit
 
 ember_act_txt:
 .byte $02

@@ -122,10 +122,10 @@ m_2_act:
         JMP clear_event
 
 m_2_item:
+    JMP clear_event
 m_2_spare:
 m_2_flee:
-    ; clear event
-    JMP clear_event
+    JMP begin_battle_exit
 
 
 dummy_act_txt:

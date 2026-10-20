@@ -1,2 +1,2 @@
 m_0_spare:
-    JMP clear_event
+    JMP begin_battle_exit

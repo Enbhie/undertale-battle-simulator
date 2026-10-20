@@ -116,15 +116,13 @@ INIT:
 
 
 choose_fight:
-    mov menu_size, #$03
+    mov menu_size, #$02
     mov menu_idx, #$00
 
     mov menu_list_pos_x+0, #$58
     mov menu_list_pos_y+0, #$88
     mov menu_list_pos_x+1, #$58
     mov menu_list_pos_y+1, #$98
-    mov menu_list_pos_x+2, #$58
-    mov menu_list_pos_y+2, #$A8
 
     mov menu_list_str+0, #FONT_CHR_BNK
     mov menu_list_str+1, #'1'
@@ -149,17 +147,6 @@ choose_fight:
     mov menu_list_str+25, #'i'
     mov menu_list_str+26, #'t'
     mov menu_list_str+27, #$00
-
-    mov menu_list_str+32, #FONT_CHR_BNK
-    mov menu_list_str+33, #'3'
-    mov menu_list_str+34, #'.'
-    mov menu_list_str+35, #' '
-    mov menu_list_str+36, #'E'
-    mov menu_list_str+37, #'m'
-    mov menu_list_str+38, #'b'
-    mov menu_list_str+39, #'e'
-    mov menu_list_str+40, #'r'
-    mov menu_list_str+41, #$00
 
     JSR update_player_menu_pos
     JSR @draw_cursor
@@ -203,4 +190,4 @@ choose_fight:
         JMP draw_player
 
 fight_select_ids:
-.byte $01, $02, $03
+.byte $01, $02

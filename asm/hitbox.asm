@@ -47,26 +47,18 @@ update_hitboxes:
 ; X = hitbox index
 ; use A
 is_player_hit:
-    ; Heart and projectile overlap test. player_x/player_y represent the
-    ; heart center, so checking a single point misses visually overlapping hits.
-    ; if player_right < hitbox_left
+    ; if player x >= hitbox_x[X]
     LDA player_x
-    add #$04
     CMP hitbox_x, X
     blt :+
-    ; or player_left >= hitbox_right
-    LDA player_x
-    sub #$04
+    ; and player x < hitbox_w[X]
     CMP hitbox_w, X
     bge :+
-    ; or player_bottom < hitbox_top
+    ; and player y >= hitbox_y[X]
     LDA player_y
-    add #$04
     CMP hitbox_y, X
     blt :+
-    ; or player_top >= hitbox_bottom
-    LDA player_y
-    sub #$04
+    ; and player y < hitbox_h[X]
     CMP hitbox_h, X
     bge :+
         ; set Z

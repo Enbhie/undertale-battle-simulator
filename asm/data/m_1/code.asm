@@ -141,9 +141,10 @@ m_1_act:
     RTS
 
 m_1_item:
+    JMP clear_event
 m_1_spare:
 m_1_flee:
-    JMP clear_event
+    JMP begin_battle_exit
 
 froggit_act_txt:
 .byte $02

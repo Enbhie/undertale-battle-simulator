@@ -48,7 +48,7 @@ menu_go_item_choice:
 
 
 menu_go_flee:
-    JMP menu_ret
+    JMP begin_battle_exit
 
 
 menu_go_item:

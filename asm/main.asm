@@ -11,6 +11,8 @@
 .include "box/bot.asm"
 .include "box/utils.asm"
 
+.include "battle_exit.asm"
+
 .include "dmg/table.asm"
 .include "dmg/anim.asm"
 
@@ -102,6 +104,8 @@ MAIN_loop:
 
     ; process input + player
     JSR update_input
+    JSR update_battle_exit
+    BNE MAIN_end
     JSR update_player
 
     @DEBUG_MAIN_DRAW:

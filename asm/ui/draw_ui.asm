@@ -32,8 +32,8 @@ draw_update_menu:
         LDA menu_data_main_pos_x, Y
         CMP player_x
         BNE :+
-            ; upper tile = UI_CHR_BNK + gray palette for the selected command
-            LDY #UI_CHR_BNK + $40
+            ; upper tile = UI_CHR_BNK + 1 + yellow palette
+            LDY #UI_CHR_BNK + 1 + $80
             BNE :++ ; JMP
         ; else
         :

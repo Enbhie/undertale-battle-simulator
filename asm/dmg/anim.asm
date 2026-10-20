@@ -18,6 +18,18 @@ dmg_anim:
     @end_anim:
         ; clear_main_box()
         JSR clear_main_box
+        ; subtract the completed strike from the selected monster's HP
+        LDA selected_monster
+        shift ASL, MONSTER_STAT_SHIFT
+        TAX
+        LDA monster_stats + MonsterStat::hp, X
+        SEC
+        SBC fight_damage
+        STA monster_stats + MonsterStat::hp, X
+        LDA monster_stats + MonsterStat::hp + 1, X
+        SBC #$00
+        STA monster_stats + MonsterStat::hp + 1, X
+        BCC @defeated
         ; call monster hit event
         mvx cur_monster_fight_pos, selected_monster
         LDA #EVENT::HIT
@@ -33,6 +45,12 @@ dmg_anim:
         mov MMC5_CHR_BNK0, #PLAYER_SPRITE_BNK
         ; return
         RTS
+
+    @defeated:
+        LDA #$00
+        STA monster_stats + MonsterStat::hp, X
+        STA monster_stats + MonsterStat::hp + 1, X
+        JMP begin_battle_exit
 
 
     @init:

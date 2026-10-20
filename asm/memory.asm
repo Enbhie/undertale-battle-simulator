@@ -181,6 +181,8 @@
     fight_state: .res 1
     fight_damage: .res 1
     fight_markpos: .res 1
+    battle_exit_state: .res 1
+    battle_exit_timer: .res 1
 
     fight_bcd: .res 3
 

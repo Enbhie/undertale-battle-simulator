@@ -59,8 +59,8 @@ m_0_turn:
             TAX
             ; py = $80
             LDY #$80
-            ; h_idx = new_hitbox(HITBOX::FALLING_DIAMOND, px, py)
-            LDA #HITBOX::FALLING_DIAMOND
+            ; h_idx = new_hitbox(HITBOX::FOLLOW_DIAMOND, px, py)
+            LDA #HITBOX::FOLLOW_DIAMOND
             JSR new_hitbox
             ; if error (not slot found)
             CPY #$FF

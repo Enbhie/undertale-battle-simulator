@@ -26,7 +26,7 @@ init_pal:
     .byte $0F ; backdrop color
     ; background
     .byte $30, $0F, $30 ; first white palette
-    .byte $0F, $10, $20 ; selected-command gray palette
+    .byte $0F, $30, $30 ; second white palette
     .byte $16, $28, $30 ; UI + text palette
     .byte $17, $00, $00 ; orange
     ; sprite

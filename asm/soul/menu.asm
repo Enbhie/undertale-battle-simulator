@@ -6,13 +6,16 @@
 ;
 ;--------------------------------
 switch_player_soul_to_menu:
+    ; change soul color to red
+    mov palettes+15, #$16
+    ora_adr nmi_flags, #NMI_PLT
     ; make input take time
     mov btn_timer_var, #BTN_TIMER
     STA btn_1_timer
     ;
     JSR menu_init
-    ; Menu selection is a text palette change, not a soul sprite.
-    and_adr player_flag, #$FF - PLAYER_FLAG_DRAW_PLAYER
+    ; draw the player
+    ora_adr player_flag, #PLAYER_FLAG_DRAW_PLAYER
     ; return
     RTS
 
