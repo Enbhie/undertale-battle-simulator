@@ -50,6 +50,17 @@ dmg_anim:
         LDA #$00
         STA monster_stats + MonsterStat::hp, X
         STA monster_stats + MonsterStat::hp + 1, X
+        LDA boss_chain_stage
+        BEQ @exit_battle
+        CMP #$03
+        BCS @exit_battle
+        LDA boss_chain_round
+        CMP #$05
+        BCC @exit_battle
+        JSR begin_boss_chain_transition
+        RTS
+
+    @exit_battle:
         JMP begin_battle_exit
 
 

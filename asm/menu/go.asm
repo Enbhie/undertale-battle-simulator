@@ -30,6 +30,7 @@
 
 
 menu_go_item_choice:
+    JSR count_boss_chain_round
     ; get item id
     LDA player_inv, X
     PHA
@@ -122,6 +123,7 @@ menu_go_item:
 
 
 menu_go_act_monster_choice:
+    JSR count_boss_chain_round
     ; act_choice = X
     STX act_choice
     ; act event
@@ -197,7 +199,12 @@ menu_go_main:
     ;
     JSR clear_main_box
     ;
+    LDA menu_dialog_bnk
+    ORA menu_dialog_lo
+    ORA menu_dialog_hi
+    BEQ :+
     JSR menu_update_dialog
+:
     ;
     JMP draw_update_menu
 
@@ -251,6 +258,7 @@ menu_go_fight:
 
 
 menu_go_spare:
+    JSR count_boss_chain_round
     ; spare event
     LDA #EVENT::SPARE
     STA monster_events+0
@@ -264,11 +272,23 @@ menu_go_spare:
 
 
 menu_go_fight_monster:
+    JSR count_boss_chain_round
     ; save choosen monster
     STX selected_monster
     ; switch player to fight soul and return
     mov player_soul, #SOUL::FIGHT
     JMP switch_player_soul
+
+
+count_boss_chain_round:
+    LDA boss_chain_stage
+    BEQ @done
+    LDA boss_chain_round
+    CMP #$05
+    BCS @done
+    INC boss_chain_round
+@done:
+    RTS
 
 
 menu_data_main:

@@ -96,6 +96,21 @@ INIT:
 
     ; choose the encounter before loading its monster data
     JSR choose_fight
+    LDA fight_id
+    CMP #$04
+    BNE @normal_fight
+        LDA #$01
+        STA boss_chain_stage
+        LDA #$00
+        STA boss_chain_round
+        STA boss_chain_anim_state
+        BEQ @load_fight
+    @normal_fight:
+        LDA #$00
+        STA boss_chain_stage
+        STA boss_chain_round
+        STA boss_chain_anim_state
+    @load_fight:
     JSR load_fight
 
     ; update player UI
@@ -116,13 +131,15 @@ INIT:
 
 
 choose_fight:
-    mov menu_size, #$02
+    mov menu_size, #$03
     mov menu_idx, #$00
 
     mov menu_list_pos_x+0, #$58
     mov menu_list_pos_y+0, #$88
     mov menu_list_pos_x+1, #$58
     mov menu_list_pos_y+1, #$98
+    mov menu_list_pos_x+2, #$58
+    mov menu_list_pos_y+2, #$A8
 
     mov menu_list_str+0, #FONT_CHR_BNK
     mov menu_list_str+1, #'1'
@@ -147,6 +164,23 @@ choose_fight:
     mov menu_list_str+25, #'i'
     mov menu_list_str+26, #'t'
     mov menu_list_str+27, #$00
+
+    mov menu_list_str+32, #FONT_CHR_BNK
+    mov menu_list_str+33, #'3'
+    mov menu_list_str+34, #'.'
+    mov menu_list_str+35, #' '
+    mov menu_list_str+36, #'G'
+    mov menu_list_str+37, #'r'
+    mov menu_list_str+38, #'a'
+    mov menu_list_str+39, #'s'
+    mov menu_list_str+40, #'s'
+    mov menu_list_str+41, #'h'
+    mov menu_list_str+42, #'o'
+    mov menu_list_str+43, #'p'
+    mov menu_list_str+44, #'p'
+    mov menu_list_str+45, #'e'
+    mov menu_list_str+46, #'r'
+    mov menu_list_str+47, #$00
 
     JSR update_player_menu_pos
     JSR @draw_cursor
@@ -190,4 +224,4 @@ choose_fight:
         JMP draw_player
 
 fight_select_ids:
-.byte $01, $02
+.byte $01, $02, $04

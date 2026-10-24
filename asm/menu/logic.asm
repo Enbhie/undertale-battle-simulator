@@ -34,6 +34,14 @@ menu_set_dialog:
     RTS
 
 
+menu_clear_dialog:
+    LDA #$00
+    STA menu_dialog_bnk
+    STA menu_dialog_lo
+    STA menu_dialog_hi
+    RTS
+
+
 menu_update_dialog:
     LDA menu_dialog_bnk
     LDX menu_dialog_lo
@@ -198,5 +206,4 @@ menu_setup:
     to_x_dec @loop, #-1
 
     RTS
-
 

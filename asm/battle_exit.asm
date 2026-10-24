@@ -33,8 +33,88 @@ begin_battle_exit:
     RTS
 
 
+begin_boss_chain_transition:
+    LDA #$01
+    STA boss_chain_anim_state
+    LDA #$00
+    STA n_dialog
+    STA player_flag
+    STA fight_state
+    STA fight_timer
+    STA fight_damage
+    STA fight_markpos
+    STA item_adr+0
+    STA item_adr+1
+    STA item_var
+    STA monster_0_event
+    STA monster_1_event
+    STA monster_2_event
+    mov player_soul, #SOUL::WAIT
+
+    JSR clear_hitbox
+
+    for_x @clear_anims, #MAX_ANIM-1
+        LDA #$00
+        STA anims_flag, X
+    to_x_dec @clear_anims, #0
+
+    LDA boss_chain_stage
+    CMP #$01
+    BNE @snake_transition
+        display_anim ANIM_DATA_MONSTERS_CHAIN_EAT_GRASSHOPPER_0
+        RTS
+
+    @snake_transition:
+        display_anim ANIM_DATA_MONSTERS_CHAIN_EAT_FROGGIT_0
+        RTS
+
+
 ; Return A = 0 while normal battle processing may continue, nonzero otherwise.
 update_battle_exit:
+    LDA boss_chain_anim_state
+    BEQ @normal_exit
+
+    LDX #MAX_ANIM-1
+    @wait_for_chain_anim:
+        LDA anims_flag, X
+        BMI @chain_active
+        DEX
+        BPL @wait_for_chain_anim
+
+    LDA boss_chain_stage
+    CMP #$01
+    BNE @load_snake
+        LDA #$02
+        STA boss_chain_stage
+        LDA #$02
+        STA fight_id
+        JMP @load_chain_boss
+    @load_snake:
+        LDA #$03
+        STA boss_chain_stage
+        LDA #$05
+        STA fight_id
+
+    @load_chain_boss:
+        LDA #$00
+        STA boss_chain_round
+        JSR clear_chain_battle_state
+        JSR clear_main_box
+        JSR load_fight
+        LDA #SOUL::WAIT
+        STA player_soul
+        LDA #(PLAYER_FLAG_DRAW_HP + PLAYER_FLAG_DRAW_PLAYER)
+        STA player_flag
+        LDA #$00
+        STA boss_chain_anim_state
+        LDA #$01
+        RTS
+
+    @chain_active:
+        LDA #$00
+        RTS
+
+    @normal_exit:
     LDA battle_exit_state
     BEQ @done
 
@@ -85,6 +165,33 @@ update_battle_exit:
 
 @done:
     LDA #$00
+    RTS
+
+
+clear_chain_battle_state:
+    LDA #$00
+    STA fight_state
+    STA fight_timer
+    STA fight_damage
+    STA fight_markpos
+    STA item_adr+0
+    STA item_adr+1
+    STA item_var
+
+    for_x @clear_monsters, #$02
+        LDA #$00
+        STA monster_events, X
+        STA monster_last_events, X
+        STA monster_flags, X
+        STA monster_act_str_size, X
+    to_x_dec @clear_monsters, #0
+
+    for_x @clear_vars, #MONSTER_VAR_SIZE*3-1
+        LDA #$00
+        STA monster_vars, X
+    to_x_dec @clear_vars, #-1
+
+    JSR clear_hitbox
     RTS
 
 
