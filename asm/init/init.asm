@@ -94,8 +94,10 @@ INIT:
     ; init packet_buffer_end
     sta_ptr packet_buffer_end, packet_buffer
 
-    ; choose the encounter before loading its monster data
+    JSR show_title_screen
     JSR choose_fight
+    LDA fight_id
+    STA boss_chain_target_fight
     LDA fight_id
     CMP #$04
     BNE @normal_fight
@@ -111,7 +113,16 @@ INIT:
         STA boss_chain_round
         STA boss_chain_anim_state
     @load_fight:
-    JSR load_fight
+    LDA boss_chain_target_fight
+    CMP #$01
+    BEQ @load_selected_fight
+        JSR begin_dummy_tutorial
+        JMP @fight_ready
+    @load_selected_fight:
+        LDA boss_chain_target_fight
+        STA fight_id
+        JSR load_fight
+    @fight_ready:
 
     ; update player UI
     mov player_flag, #PLAYER_FLAG_DRAW_HP + PLAYER_FLAG_DRAW_PLAYER
@@ -127,6 +138,45 @@ INIT:
     LDX #7
     JSR play_music
 
+    RTS
+
+
+show_title_screen:
+    LDA #$01
+    STA fight_id
+    LDA #$00
+    STA cur_monster_fight_pos
+    JSR load_fight
+    display_anim ANIM_DATA_MONSTERS_DUMMY_NORMAL
+
+    LDX #$2F
+    @copy_title:
+        LDA title_screen_text, X
+        STA menu_list_str, X
+        DEX
+        BPL @copy_title
+
+    mov menu_size, #$03
+    mov menu_idx, #$00
+    mov menu_list_pos_x+0, #$4C
+    mov menu_list_pos_x+1, #$4C
+    mov menu_list_pos_x+2, #$4C
+    mov menu_list_pos_y+0, #17*8+4
+    mov menu_list_pos_y+1, #19*8+4
+    mov menu_list_pos_y+2, #21*8+4
+    JSR draw_menu
+
+    @input:
+        @wait_vblank:
+            BIT nmi_flags
+            BPL @wait_vblank
+        mov nmi_flags, #(NMI_SPR+NMI_SCRL+NMI_BKG)
+        JSR update_input
+        JSR draw_packet_buffer
+        JSR update_anims
+        LDA btn_1
+        AND #%10000000
+        BEQ @input
     RTS
 
 
@@ -225,3 +275,11 @@ choose_fight:
 
 fight_select_ids:
 .byte $01, $02, $04
+
+title_screen_text:
+    .byte FONT_CHR_BNK, "UNDERTALE", $00
+    .res 5, $00
+    .byte FONT_CHR_BNK, "BATTLE SIM", $00
+    .res 4, $00
+    .byte FONT_CHR_BNK, "A: START", $00
+    .res 6, $00

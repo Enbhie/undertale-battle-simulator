@@ -445,6 +445,7 @@ OAM:
         boss_chain_stage: .res 1
         boss_chain_round: .res 1
         boss_chain_anim_state: .res 1
+        boss_chain_target_fight: .res 1
 
         ; Variable: cur_monster_fight_pos
         ;----------------
