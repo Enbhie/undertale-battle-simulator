@@ -45,6 +45,40 @@ class FinalBeamAssetTests(unittest.TestCase):
 
 @unittest.skipUnless(MESEN, "set NES_MESEN to the Mesen executable to run emulator tests")
 class FinalAttackEmulatorTests(unittest.TestCase):
+    def test_sans_spare_menu_color(self):
+        result = subprocess.run(
+            [MESEN, "--testrunner", str(ROOT / "Undertale.nes"),
+             str(ROOT / "tests" / "sans_spare_color.lua")],
+            cwd=ROOT, capture_output=True, text=True, timeout=120, check=True,
+        )
+        images, states = {}, {}
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if not parts:
+                continue
+            if parts[0] == "SPARE_IMAGE":
+                images[parts[1]] = Image.open(io.BytesIO(bytes.fromhex(parts[2]))).convert("RGB")
+            elif parts[0] == "SPARE_STATE":
+                states[parts[1]] = (int(parts[2]), int(parts[3]))
+            elif parts[0] == "FINAL_IN_PROGRESS":
+                self.assertEqual(int(parts[1]) & 1, 0)
+        self.assertIn("DONE", result.stdout)
+        self.assertNotIn("TIMEOUT", result.stdout)
+        self.assertEqual(states, {"initial": (0, 0x80), "sweat": (0x10, 0x80),
+                                  "final": (0x31, 0x81)})
+        for label in ("initial", "sweat", "final"):
+            pixels = [images[label].getpixel((x, y))
+                      for y in range(136, 144) for x in range(48, 88)]
+            white = sum(min(pixel) > 200 for pixel in pixels)
+            yellow = sum(pixel[0] > 150 and pixel[1] > 150 and pixel[2] < 60
+                         for pixel in pixels)
+            if label == "final":
+                self.assertGreater(yellow, 20)
+                self.assertEqual(white, 0)
+            else:
+                self.assertGreater(white, 20)
+                self.assertEqual(yellow, 0)
+
     def test_horizontal_bone_rendering(self):
         result = subprocess.run(
             [MESEN, "--testrunner", str(ROOT / "Undertale.nes"),
@@ -156,12 +190,16 @@ class FinalAttackEmulatorTests(unittest.TestCase):
         done = False
         no_replay = False
         bones = {}
+        phase_banks = {}
+        dialogue_bank = None
+        replay_bank = None
         for line in result.stdout.splitlines():
             parts = line.split()
             if not parts:
                 continue
             if parts[0] == "PHASE":
                 phases.append((int(parts[1]), int(parts[2])))
+                phase_banks[int(parts[2])] = int(parts[4])
             elif parts[0] == "BEAM_DURATION":
                 beam_duration = int(parts[1])
             elif parts[0] == "BONES":
@@ -175,6 +213,9 @@ class FinalAttackEmulatorTests(unittest.TestCase):
                 done = True
             elif parts[0] == "NO_REPLAY":
                 no_replay = True
+                replay_bank = int(parts[2])
+            elif parts[0] == "DIALOGUE_MUSIC":
+                dialogue_bank = int(parts[1])
             elif parts[0] == "TIMEOUT":
                 self.fail("final attack did not finish")
         self.assertEqual([phase for _, phase in phases], [1, 2, 3, 4, 5, 0])
@@ -182,6 +223,10 @@ class FinalAttackEmulatorTests(unittest.TestCase):
         self.assertEqual(phases[3][0] - phases[2][0], 420)
         self.assertIn(beam_duration, (480, 481))
         self.assertTrue(done and no_replay)
+        for phase in (1, 2, 3, 4, 5):
+            self.assertEqual(phase_banks[phase], 0xA7)
+        self.assertEqual(dialogue_bank, 0xB0)
+        self.assertEqual(replay_bank, 0xB0)
         self.assertGreater(bones[1][0], 0)
         self.assertGreater(bones[2][1], 0)
         self.assertGreater(bones[3][1], 0)

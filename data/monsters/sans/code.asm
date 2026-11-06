@@ -31,6 +31,8 @@ start:
     JMP clear_event
 
 turn:
+    SANS_FLAG_SWEAT = $10
+    SANS_FLAG_FINAL_STARTED = $20
     @state = monster_vars+0
     @time = monster_vars+1
     @sp = monster_vars+3
@@ -83,10 +85,10 @@ turn:
     BCC :+
     LDY cur_monster_fight_pos
     LDA monster_flags, Y
-    AND #$04
+    AND #SANS_FLAG_FINAL_STARTED
     BNE :+
     LDA monster_flags, Y
-    ORA #$04
+    ORA #SANS_FLAG_FINAL_STARTED
     STA monster_flags, Y
     INC sans_final_phase
 :
@@ -96,10 +98,10 @@ turn:
     BCC :+
     LDY cur_monster_fight_pos
     LDA monster_flags, Y
-    AND #$02
+    AND #SANS_FLAG_SWEAT
     BNE :+
     LDA monster_flags, Y
-    ORA #$02
+    ORA #SANS_FLAG_SWEAT
     STA monster_flags, Y
     display_anim ANIM_DATA_MONSTERS_SANS_SANS_SWEAT_BKG
     JSR get_var_idx
@@ -496,6 +498,17 @@ turn:
     STA @state, X
     RTS
     @finish_normal:
+    LDA sans_final_phase
+    CMP #$05
+    BNE :+
+    LDY cur_monster_fight_pos
+    LDA monster_flags, Y
+    ORA #MONSTER_FLAG_SPARE
+    STA monster_flags, Y
+    LDX #86
+    JSR play_music
+    JSR get_var_idx
+:
     LDA #$00
     STA @state, X
     INC @att, X
@@ -948,9 +961,10 @@ spare:
     JSR get_var_idx
     LDA @spare_wait, X
     BNE @spare_wait_dialog
-    LDA sans_turns
-    CMP #22
-    BCS @spare_win
+    LDY cur_monster_fight_pos
+    LDA monster_flags, Y
+    AND #MONSTER_FLAG_SPARE
+    BNE @spare_win
     INC @spare_wait, X
     call_read_dialog TXT_SANS_SPARE_NOT_READY
     RTS

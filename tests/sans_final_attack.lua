@@ -33,7 +33,7 @@ emu.addEventCallback(function()
     local phase = emu.read(0x64CE, mem)
     local state = emu.read(0xDC, mem)
     if frame > 340 and phase ~= last_phase then
-        print("PHASE", frame, phase, state)
+        print("PHASE", frame, phase, state, emu.read(0xAA, mem))
         last_phase = phase
         if phase == 4 then beam_start = frame end
         if phase == 5 then print("BEAM_DURATION", frame - beam_start) end
@@ -77,10 +77,11 @@ emu.addEventCallback(function()
     if not finished and box_ready > 0 and frame >= box_ready then
         finished = true
         capture("dialogue")
+        print("DIALOGUE_MUSIC", emu.read(0xAA, mem))
         print("DONE", frame)
         emu.write(0x69E, 2, mem)
     elseif finished and phase == 0 and state == 2 then
-        print("NO_REPLAY", frame)
+        print("NO_REPLAY", frame, emu.read(0xAA, mem))
         emu.stop()
     end
     if frame == 2500 then print("TIMEOUT"); emu.stop() end
