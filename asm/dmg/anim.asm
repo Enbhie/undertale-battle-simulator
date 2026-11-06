@@ -30,14 +30,14 @@ dmg_anim:
         LDA monster_stats + MonsterStat::hp + 1, X
         SBC #$00
         STA monster_stats + MonsterStat::hp + 1, X
+        ; Clear the strike state for both surviving and defeated monsters.
+        DEC fight_state
         JSR sans_kill_check
         BCC @defeated
         ; call monster hit event
         mvx cur_monster_fight_pos, selected_monster
         LDA #EVENT::HIT
         STA monster_events, X
-        ; fight_state--
-        DEC fight_state
         ; fight_timer = 0
         mov fight_timer, #0
         ; switch to wait soul

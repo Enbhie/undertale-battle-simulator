@@ -17,6 +17,8 @@ m_4_start:
     STA sans_turns
     STA sans_glide
     STA sans_off
+    STA sans_final_phase
+    STA sans_final_repeat
 
     JSR get_var_idx
     LDA #$00
@@ -45,8 +47,25 @@ m_4_turn:
     LDA @state ,  X
     BEQ @setup
     CMP #$01
-    BEQ @wait
+    BNE :+
+    JMP @wait
+:
+    CMP #$03
+    BEQ @restore_wait
     JMP @attack
+
+    @restore_wait:
+    LDA packet_buffer_end
+    CMP #<packet_buffer
+    BNE @restore_rts
+    LDA packet_buffer_end+1
+    CMP #>packet_buffer
+    BNE @restore_rts
+    LDA background_index
+    BNE @restore_rts
+    JMP @finish
+    @restore_rts:
+    RTS
 
     @setup:
     INC @state ,  X
@@ -54,6 +73,23 @@ m_4_turn:
     STA @time ,  X
     STA @cnt ,  X
     STA @sp ,  X
+    STA sans_final_phase
+    STA sans_final_repeat
+    LDA #$FF
+    STA sans_hbone_prev
+    STA sans_hbone_prev+1
+    LDA sans_turns
+    CMP #22
+    BCC :+
+    LDY cur_monster_fight_pos
+    LDA monster_flags ,  Y
+    AND #$04
+    BNE :+
+    LDA monster_flags ,  Y
+    ORA #$04
+    STA monster_flags ,  Y
+    INC sans_final_phase
+:
     ; halfway through the strikes Sans starts to sweat
     LDA sans_turns
     CMP #10
@@ -79,11 +115,66 @@ m_4_turn:
     @wait:
     LDA dialogbox_anim_flag
     BNE @rts
+    LDA sans_final_phase
+    CMP #$01
+    BEQ @hbone_setup
+    CMP #$00
+    BNE @wait_done
+    LDA @att ,  X
+    AND #$03
+    CMP #$03
+    BNE @wait_done
+    @hbone_setup:
+    LDA @sp ,  X
+    BNE @hbone_wait
+    INC @sp ,  X
+    sta_ptr tmp+8 ,  sans_hbone_empty
+    LDA #SANS_HBONE_CHR
+    STA tmp+10
+    JSR sans_box_draw
+    RTS
+    @hbone_wait:
+    LDA packet_buffer_end
+    CMP #<packet_buffer
+    BNE @rts
+    LDA packet_buffer_end+1
+    CMP #>packet_buffer
+    BNE @rts
+    LDA background_index
+    BNE @rts
+    LDA #$00
+    STA @sp ,  X
+    @wait_done:
     INC @state ,  X
     @rts:
     RTS
 
     @attack:
+    LDA sans_final_phase
+    BEQ @normal_attack
+    CMP #$01
+    BNE :+
+    JMP @hbones
+:
+    CMP #$02
+    BNE :+
+    JMP @wave
+:
+    CMP #$03
+    BNE :+
+    JMP @bones
+:
+    CMP #$04
+    BEQ :+
+    LDA @time ,  X
+    CMP #12
+    BCS :++
+    JMP @tick
+:
+    JMP @final_beam
+:
+    JMP @finish
+    @normal_attack:
     LDA @att ,  X
     AND #$03
     BNE :+
@@ -101,9 +192,17 @@ m_4_turn:
 
     ; Attack 1: thin bones slide left, the gap between the top and bottom bones rises and falls
     @wave:
+    LDA sans_final_phase
+    BEQ :+
+    LDA @time ,  X
+    CMP #175
+    BCS @wave_end
+    JMP @wave_spawn
+:
     LDA @time ,  X
     CMP #$8C
     BCS @wave_end
+    @wave_spawn:
     LDA @sp ,  X
     BNE @wave_dec
     LDA #$09
@@ -138,11 +237,34 @@ m_4_turn:
     @wave_dec:
     DEC @sp ,  X
     @wave_end:
+    LDA sans_final_phase
+    CMP #$02
+    BEQ @long_bones_end
+    CMP #$03
+    BEQ @long_bones_end
     LDA @time ,  X
     CMP #$D2
     BCC :+
     JMP @finish
 :
+    JMP @tick
+
+    @long_bones_end:
+    LDA @time ,  X
+    CMP #174
+    BCC @long_bones_tick
+    LDA sans_final_repeat
+    BNE @long_bones_last
+    INC sans_final_repeat
+    LDA #$FF
+    STA @time ,  X
+    JMP @tick
+    @long_bones_last:
+    LDA @time ,  X
+    CMP #244
+    BCC @long_bones_tick
+    JMP @finish
+    @long_bones_tick:
     JMP @tick
 
     ; Attack 2: a beam ring around the middle, then an X shaped beam
@@ -200,9 +322,17 @@ m_4_turn:
 
     ; Attack 3: thin bones slide left one at a time, alternating top and bottom
     @bones:
+    LDA sans_final_phase
+    BEQ :+
+    LDA @time ,  X
+    CMP #175
+    BCS @bones_end
+    JMP @bones_spawn
+:
     LDA @time ,  X
     CMP #$8C
     BCS @bones_end
+    @bones_spawn:
     LDA @sp ,  X
     BNE @bones_dec
     LDA #$11
@@ -235,6 +365,11 @@ m_4_turn:
     @bones_dec:
     DEC @sp ,  X
     @bones_end:
+    LDA sans_final_phase
+    CMP #$03
+    BNE :+
+    JMP @long_bones_end
+:
     LDA @time ,  X
     CMP #$D2
     BCC :+
@@ -242,14 +377,72 @@ m_4_turn:
 :
     JMP @tick
 
-    ; Attack 4: long bones lying on their side fall from the left half, then the right half
+    ; Step counterclockwise every 9 frames, about 2.9 pixels/frame at the box edge.
+    @final_beam:
+    LDA @sp ,  X
+    BEQ @final_beam_draw
+    CMP #$05
+    BEQ @final_beam_collision
+    JMP @final_beam_end
+    @final_beam_draw:
+    LDY @cnt ,  X
+    TYA
+    CLC
+    ADC #SANS_ROTATE_BANK + $80
+    STA tmp+10
+    sta_ptr tmp+8 ,  sans_rotate_map
+    JSR sans_box_draw
+    JMP @final_beam_end
+    @final_beam_collision:
+    JSR clear_hitbox
+    JSR get_var_idx
+    LDY @cnt ,  X
+    LDA sans_rotate_hitbox_lo ,  Y
+    STA tmp+8
+    LDA sans_rotate_hitbox_hi ,  Y
+    STA tmp+9
+    JSR sans_beam_hitboxes
+    JSR get_var_idx
+    DEC @cnt ,  X
+    LDA @cnt ,  X
+    AND #$07
+    STA @cnt ,  X
+    @final_beam_end:
+    JSR get_var_idx
+    INC @sp ,  X
+    LDA @sp ,  X
+    CMP #9
+    BCC :+
+    LDA #$00
+    STA @sp ,  X
+:
+    LDA @time ,  X
+    CMP #239
+    BNE @final_beam_tick
+    LDA sans_final_repeat
+    BNE @final_beam_done
+    INC sans_final_repeat
+    LDA #$FF
+    STA @time ,  X
+    @final_beam_tick:
+    JMP @tick
+    @final_beam_done:
+    JSR clear_hitbox
+    JSR sans_erase
+    JSR get_var_idx
+    INC sans_final_phase
+    LDA #$00
+    STA @time ,  X
+    JMP @tick
+
+    ; Attack 4: horizontal bones alternate between falling left and rising right
     @hbones:
     LDA @time ,  X
-    CMP #$8C
+    CMP #$A0
     BCS @hbones_end
     LDA @sp ,  X
     BNE @hbones_dec
-    LDA #$11
+    LDA #$13
     STA @sp ,  X
     LDA #$04
     STA sans_kind
@@ -258,7 +451,8 @@ m_4_turn:
     TAY
     LDA sans_hbone_x ,  Y
     TAX
-    LDY #$82
+    LDA sans_hbone_y ,  Y
+    TAY
     LDA #HITBOX::BONE_FALL
     JSR sans_spawn
     JSR get_var_idx
@@ -267,10 +461,16 @@ m_4_turn:
     @hbones_dec:
     DEC @sp ,  X
     @hbones_end:
+    JSR sans_hbone_draw
+    JSR get_var_idx
     LDA @time ,  X
     CMP #$D2
     BCC :+
-    JMP @finish
+    JSR sans_erase
+    JSR get_var_idx
+    LDA #$03
+    STA @state ,  X
+    RTS
 :
     JMP @tick
 
@@ -281,6 +481,21 @@ m_4_turn:
 
     @finish:
     JSR get_var_idx
+    LDA sans_final_phase
+    BEQ @finish_normal
+    CMP #$04
+    BCS @finish_normal
+    INC sans_final_phase
+    LDA #$00
+    STA sans_final_repeat
+    STA @time ,  X
+    STA @sp ,  X
+    STA @cnt ,  X
+    JSR clear_hitbox
+    LDA #$02
+    STA @state ,  X
+    RTS
+    @finish_normal:
     LDA #$00
     STA @state ,  X
     INC @att ,  X
@@ -304,6 +519,7 @@ sans_wave_bot: .byte 3 ,  2 ,  1 ,  0 ,  1 ,  2
 sans_bone_h: .byte 8 ,  16 ,  24 ,  32
 sans_fall_x: .byte $49 ,  $90 ,  $6B ,  $B4
 sans_hbone_x: .byte $42 ,  $86
+sans_hbone_y: .byte $82 ,  $B6
 sans_w: .byte 6 ,  6 ,  6 ,  6 ,  64
 sans_h: .byte 8 ,  16 ,  24 ,  32 ,  6
 sans_alo:
@@ -314,6 +530,236 @@ sans_ahi:
     .byte >ANIM_DATA_MONSTERS_SANS_SANS_BONE32 ,  >ANIM_DATA_MONSTERS_SANS_SANS_BONEH
 
 .include "beam_data.inc"
+.include "rotate_data.inc"
+.include "hbone_data.inc"
+
+; Consecutive bones on the same side are 40 frames apart, longer than
+; the roughly 36 frames needed to cross the box.
+sans_hbone_draw:
+    LDA #$FF
+    STA sans_hbone_now
+    STA sans_hbone_now+1
+    LDX #MAX_HITBOX-1
+    @find:
+    LDA hitbox_t ,  X
+    CMP #HITBOX::BONE_FALL
+    BNE @next
+    LDA hitbox_x ,  X
+    CMP #$42
+    BEQ @left
+    CMP #$86
+    BNE @next
+    LDA hitbox_y ,  X
+    STA sans_hbone_now+1
+    JMP @next
+    @left:
+    LDA hitbox_y ,  X
+    STA sans_hbone_now
+    @next:
+    DEX
+    BPL @find
+
+    LDX #$01
+    @dirty:
+    LDA #$00
+    STA sans_hbone_dirty ,  X
+    LDA sans_hbone_prev ,  X
+    JSR sans_hbone_mark
+    LDA sans_hbone_now ,  X
+    JSR sans_hbone_mark
+    STA sans_hbone_prev ,  X
+    DEX
+    BPL @dirty
+
+    LDA #$00
+    STA tmp+6
+    @row:
+    LDA #$00
+    STA tmp+7
+    @side:
+    LDX tmp+6
+    LDA sans_hbone_bits ,  X
+    LDX tmp+7
+    AND sans_hbone_dirty ,  X
+    BEQ @skip
+    JSR sans_hbone_row
+    @skip:
+    INC tmp+7
+    LDA tmp+7
+    CMP #$02
+    BNE @side
+    INC tmp+6
+    LDA tmp+6
+    CMP #$08
+    BNE @row
+    RTS
+
+; Mark the tile rows covered by y and y+5. Preserve A and X.
+sans_hbone_mark:
+    CMP #$FF
+    BEQ @done
+    PHA
+    SEC
+    SBC #$80
+    LSR
+    LSR
+    LSR
+    TAY
+    LDA sans_hbone_dirty ,  X
+    ORA sans_hbone_bits ,  Y
+    STA sans_hbone_dirty ,  X
+    PLA
+    PHA
+    CLC
+    ADC #5
+    SEC
+    SBC #$80
+    LSR
+    LSR
+    LSR
+    TAY
+    LDA sans_hbone_dirty ,  X
+    ORA sans_hbone_bits ,  Y
+    STA sans_hbone_dirty ,  X
+    PLA
+    @done:
+    RTS
+
+sans_hbone_bits: .byte 1 ,  2 ,  4 ,  8 ,  16 ,  32 ,  64 ,  128
+
+; Send one nine-tile half-row. The center tile combines both bones.
+sans_hbone_row:
+    LDA tmp+6
+    ASL
+    ASL
+    ASL
+    CLC
+    ADC #$80
+    STA tmp+11
+    LDX #$01
+    @state:
+    LDA sans_hbone_now ,  X
+    CMP #$FF
+    BEQ @empty
+    SEC
+    SBC tmp+11
+    CLC
+    ADC #4
+    CMP #11
+    BCS @empty
+    LSR
+    CLC
+    ADC #1
+    BNE @store
+    @empty:
+    LDA #$00
+    @store:
+    STA tmp+8 ,  X
+    DEX
+    BPL @state
+
+    LDA #$01
+    LDX tmp+6
+    BNE :+
+    LDA #$00
+    BEQ :++
+:
+    CPX #$07
+    BNE :+
+    LDA #$02
+:
+    STA tmp+10
+    TAX
+    LDA sans_hbone_center_lo ,  X
+    STA tmp+4
+    LDA sans_hbone_center_hi ,  X
+    STA tmp+5
+    LDA tmp+8
+    ASL
+    ASL
+    ASL
+    SEC
+    SBC tmp+8
+    CLC
+    ADC tmp+9
+    TAY
+    LDA (tmp+4) ,  Y
+    STA tmp+12
+
+    LDA tmp+10
+    ASL
+    CLC
+    ADC tmp+7
+    TAX
+    LDA sans_hbone_table_lo ,  X
+    STA tmp+2
+    LDA sans_hbone_table_hi ,  X
+    STA tmp+3
+    LDX tmp+7
+    LDA tmp+8 ,  X
+    ASL
+    ASL
+    ASL
+    TAY
+    mov_ptr tmp+0 ,  packet_buffer_end
+    LDA #$49
+    STY tmp+13
+    LDY #$00
+    STA (tmp+0) ,  Y
+    INY
+    LDA #$22
+    STA (tmp+0) ,  Y
+    INY
+    LDA tmp+6
+    ASL
+    ASL
+    ASL
+    ASL
+    ASL
+    CLC
+    ADC #$08
+    LDX tmp+7
+    BEQ :+
+    ADC #$08
+:
+    STA (tmp+0) ,  Y
+    INY
+    LDX tmp+7
+    BEQ :+
+    LDA tmp+12
+    STA (tmp+0) ,  Y
+    INY
+:
+    STY tmp+14
+    LDY tmp+13
+    LDX #$08
+    @tile:
+    LDA (tmp+2) ,  Y
+    STY tmp+13
+    LDY tmp+14
+    STA (tmp+0) ,  Y
+    INC tmp+14
+    LDY tmp+13
+    INY
+    DEX
+    BNE @tile
+    LDY tmp+14
+    LDA tmp+7
+    BNE :+
+    LDA tmp+12
+    STA (tmp+0) ,  Y
+    INY
+:
+    LDA #SANS_HBONE_CHR
+    LDX #$09
+    @attr:
+    STA (tmp+0) ,  Y
+    INY
+    DEX
+    BNE @attr
+    TYA
+    add_A2ptr packet_buffer_end
+    RTS
 
 ; tmp+8 points to a 17 x 8 tile image, including the box border.
 sans_beam_draw:
@@ -447,6 +893,8 @@ sans_spawn:
     CLC
     ADC hitbox_y ,  Y
     STA hitbox_h ,  Y
+    CPX #$04
+    BEQ @done
     LDA sans_alo ,  X
     STA tmp+0
     LDA sans_ahi ,  X

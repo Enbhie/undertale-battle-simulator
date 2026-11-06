@@ -102,6 +102,8 @@ data: FORCE
 	python py/gameover_img.py
 	python py/sans_img.py
 	python py/sans_beam_img.py
+	python py/sans_rotate_img.py
+	python py/sans_hbone_img.py
 	python py/anim/patch_color_chr.py Undertale.chr data/COLORSPRANIM.chr 128
 	python py/anim/buildanim.py data/monsters -a asm/data/anim_data.asm -c asm/data/anim_const.asm
 	python py/buildcode.py data/monsters -o asm/data

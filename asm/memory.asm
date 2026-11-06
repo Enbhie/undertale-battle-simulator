@@ -626,9 +626,14 @@ OAM:
         sans_strk: .res 1
         sans_gx: .res 1
         sans_gf: .res 1
+        sans_final_phase: .res 1
+        sans_final_repeat: .res 1
+        sans_hbone_prev: .res 2
+        sans_hbone_now: .res 2
+        sans_hbone_dirty: .res 2
 
         ; padding
-        .res MAX_HITBOX*2-14
+        .res MAX_HITBOX*2-22
 
     img_buf: .res 512
 

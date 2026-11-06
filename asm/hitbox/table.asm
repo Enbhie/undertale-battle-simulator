@@ -135,6 +135,14 @@ call_hitbox_move_fall:
 
 
 call_hitbox_move_bone_fall:
+    ; Move two pixels on three out of four frames (1.5 pixels/frame).
+    LDA frame_counter
+    AND #$03
+    BEQ @end
+    ; Only Sans's right-hand horizontal bones use this x position.
+    LDA hitbox_x, X
+    CMP #$86
+    BEQ @rise
     INC hitbox_y, X
     INC hitbox_h, X
     INC hitbox_y, X
@@ -143,8 +151,20 @@ call_hitbox_move_bone_fall:
     CMP player_bound_y2
     BCC @end
     JMP remove_hitbox
+    @rise:
+    DEC hitbox_y, X
+    DEC hitbox_h, X
+    DEC hitbox_y, X
+    DEC hitbox_h, X
+    LDA hitbox_y, X
+    SEC
+    SBC #$02
+    CMP player_bound_y1
+    BCC @remove
     @end:
     RTS
+    @remove:
+    JMP remove_hitbox
 
 
 call_hitbox_move_bone_left:
