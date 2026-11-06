@@ -167,7 +167,8 @@ turn:
 :
     CMP #$5E
     BEQ @b_clear
-    CMP #$64
+    ; Allow the queued erase to finish before the box starts expanding.
+    CMP #$6E
     BCC :+
     JMP @finish
 :
@@ -177,29 +178,24 @@ turn:
     JSR sans_erase
     JMP @tick
     @b_warn1:
-    LDX #SANS_RING
-    LDA #$00
-    BEQ @b_warn
+    sta_ptr tmp+8, sans_beam_ring_warning
+    JSR sans_beam_draw
+    JMP @tick
     @b_warn2:
-    LDX #SANS_CROSS
-    @b_warn:
-    LDA #$F0
-    STA tmp+6
-    LDA #$00
-    STA tmp+10
-    JSR sans_rects_run
+    sta_ptr tmp+8, sans_beam_cross_warning
+    JSR sans_beam_draw
     JMP @tick
     @b_fire1:
-    LDX #SANS_RING
-    BEQ @b_fire
+    sta_ptr tmp+8, sans_beam_ring
+    JSR sans_beam_draw
+    sta_ptr tmp+8, sans_beam_ring_hitboxes
+    JSR sans_beam_hitboxes
+    JMP @tick
     @b_fire2:
-    LDX #SANS_CROSS
-    @b_fire:
-    LDA #$F8
-    STA tmp+6
-    LDA #$01
-    STA tmp+10
-    JSR sans_rects_run
+    sta_ptr tmp+8, sans_beam_cross
+    JSR sans_beam_draw
+    sta_ptr tmp+8, sans_beam_cross_hitboxes
+    JSR sans_beam_hitboxes
     JMP @tick
 
     ; Attack 3: thin bones slide left one at a time, alternating top and bottom
@@ -303,9 +299,6 @@ turn:
     @end_event:
     JMP clear_event
 
-SANS_RING = 0
-SANS_CROSS = 17
-
 sans_wave_top: .byte 0, 1, 2, 3, 2, 1
 sans_wave_bot: .byte 3, 2, 1, 0, 1, 2
 sans_bone_h: .byte 8, 16, 24, 32
@@ -320,192 +313,121 @@ sans_ahi:
     .byte >ANIM_DATA_MONSTERS_SANS_SANS_BONE8, >ANIM_DATA_MONSTERS_SANS_SANS_BONE16, >ANIM_DATA_MONSTERS_SANS_SANS_BONE24
     .byte >ANIM_DATA_MONSTERS_SANS_SANS_BONE32, >ANIM_DATA_MONSTERS_SANS_SANS_BONEH
 
-; beam shapes inside the box (15 x 6 tiles): column, row, width, height
-sans_rects:
-    ; ring: the middle is safe
-    .byte 0, 0, 15, 2
-    .byte 0, 4, 15, 2
-    .byte 0, 2, 4, 2
-    .byte 11, 2, 4, 2
-    .byte $FF
-    ; X: the four triangles are safe
-    .byte 0, 0, 3, 1
-    .byte 12, 0, 3, 1
-    .byte 1, 1, 5, 1
-    .byte 9, 1, 5, 1
-    .byte 4, 2, 7, 2
-    .byte 1, 4, 5, 1
-    .byte 9, 4, 5, 1
-    .byte 0, 5, 3, 1
-    .byte 12, 5, 3, 1
-    .byte $FF
+.include "beam_data.inc"
 
-; X = first rect, tmp+6 = tile, tmp+10 = 1 to add hitboxes: draws the beam rects
-sans_rects_run:
-    STX sans_off
-    @next:
-    LDX sans_off
-    LDA sans_rects, X
-    CMP #$FF
-    BEQ @done
-    STA tmp+11
-    LDA sans_rects+1, X
-    STA tmp+12
-    LDA sans_rects+2, X
-    STA tmp+13
-    LDA sans_rects+3, X
-    STA tmp+14
-    LDA #$00
-    STA tmp+7
-    LDA tmp+11
-    CLC
-    ADC #$09
-    TAX
-    LDA tmp+12
-    CLC
-    ADC #$11
-    TAY
-    LDA tmp+13
-    STA tmp+2
-    LDA tmp+14
-    STA tmp+3
-    JSR sans_fill
+; tmp+8 points to a 17 x 8 tile image, including the box border.
+sans_beam_draw:
+    LDA #SANS_BEAM_CHR
+    STA tmp+10
+sans_box_draw:
+    mov_ptr tmp+4, packet_buffer_end
+    sta_ptr tmp+0, $2208
+    LDX #$08
+    @row:
+    LDY #$00
+    LDA #$51
+    STA (tmp+4), Y
+    INY
+    LDA tmp+1
+    STA (tmp+4), Y
+    INY
+    LDA tmp+0
+    STA (tmp+4), Y
+    LDA #$03
+    add_A2ptr tmp+4
+    LDY #$00
+    @tiles:
+        LDA (tmp+8), Y
+        STA (tmp+4), Y
+        INY
+        CPY #17
+        BNE @tiles
+    TYA
+    add_A2ptr tmp+8
+    LDA #17
+    add_A2ptr tmp+4
+    LDY #$00
     LDA tmp+10
-    BEQ :+
-    JSR sans_rect_hitbox
-:
-    LDA sans_off
-    CLC
-    ADC #$04
-    STA sans_off
-    JMP @next
-    @done:
+    @attributes:
+        STA (tmp+4), Y
+        INY
+        CPY #17
+        BNE @attributes
+    TYA
+    add_A2ptr tmp+4
+    LDA #$20
+    add_A2ptr tmp+0
+    DEX
+    BNE @row
+    mov_ptr packet_buffer_end, tmp+4
     RTS
 
-; hitbox of the rect in tmp+11..14 (a bit smaller than the drawing)
-sans_rect_hitbox:
-    LDA tmp+11
-    ASL
-    ASL
-    ASL
+; Rectangles are generated from the same PNG as the visible beam.
+sans_beam_hitboxes:
+    @next:
+    LDY #$00
+    LDA (tmp+8), Y
+    CMP #$FF
+    BEQ @done
     CLC
-    ADC #72
-    LDX tmp+11
-    BNE :+
-    LDA #64
-:
-    SEC
-    SBC #4
+    ADC #60
     STA sans_x
-    LDA tmp+12
-    ASL
-    ASL
-    ASL
+    INY
+    LDA (tmp+8), Y
     CLC
-    ADC #136
-    LDX tmp+12
-    BNE :+
-    LDA #128
-:
-    SEC
-    SBC #4
+    ADC #126
     STA sans_y
-    LDA tmp+11
+    INY
+    LDA (tmp+8), Y
     CLC
-    ADC tmp+13
-    ASL
-    ASL
-    ASL
+    ADC sans_x
+    ADC #1
+    STA tmp+11
+    INY
+    LDA (tmp+8), Y
     CLC
-    ADC #72
-    CMP #192
-    BCC :+
-    LDA #200
-:
-    SEC
-    SBC #3
-    STA tmp+4
-    LDA tmp+12
-    CLC
-    ADC tmp+14
-    ASL
-    ASL
-    ASL
-    CLC
-    ADC #136
-    CMP #184
-    BCC :+
-    LDA #192
-:
-    SEC
-    SBC #3
-    STA tmp+5
+    ADC sans_y
+    STA tmp+12
+    LDA #$04
+    add_A2ptr tmp+8
     LDX sans_x
     LDY sans_y
     LDA #HITBOX::BLOCK
     JSR new_hitbox
     CPY #$FF
-    BEQ :+
-    LDA tmp+4
+    BEQ @done
+    LDA tmp+11
     STA hitbox_w, Y
-    LDA tmp+5
+    LDA tmp+12
     STA hitbox_h, Y
-:
+    JMP @next
+    @done:
     RTS
 
-; wipes the beams out of the box
 sans_erase:
-    LDA #$00
-    STA tmp+6
-    LDA #UI_CHR_BNK
-    STA tmp+7
-    LDX #$09
-    LDY #$11
-    LDA #$0F
-    STA tmp+2
-    LDA #$06
-    STA tmp+3
-    ; fall through
+    sta_ptr tmp+8, sans_box_tiles
+    LDA #UI_CHR_BNK + $80
+    STA tmp+10
+    JMP sans_box_draw
 
-; X,Y = first tile, tmp+2 = width, tmp+3 = height, tmp+6 = tile, tmp+7 = tile info
-; same as clear_inside_box, with any tile
-sans_fill:
-    @ppu = tmp+0
-    @w = tmp+2
-    @h = tmp+3
-    @packet = tmp+4
-    mov_ptr @packet, packet_buffer_end
-    JSR xytile_2_ppu
-    for_x @line, @h
-        LDY #$00
-        LDA @w
-        ORA #$40
-        STA (@packet), Y
-        INY
-        LDA @ppu+1
-        STA (@packet), Y
-        INY
-        LDA @ppu+0
-        STA (@packet), Y
-        INY
-        TYA
-        add_A2ptr @packet
-        add_A2ptr @ppu, #$20
-        LDA tmp+6
-        for_y @lo, #0
-            STA (@packet), Y
-        to_y_inc @lo, @w
-        TYA
-        add_A2ptr @packet
-        LDA tmp+7
-        for_y @hi, #0
-            STA (@packet), Y
-        to_y_inc @hi, @w
-        TYA
-        add_A2ptr @packet
-    to_x_dec @line, #0
-    mov_ptr packet_buffer_end, @packet
-    RTS
+sans_box_tiles:
+    .byte DIALOG_BOX_TILE_TL
+    .repeat 15
+    .byte DIALOG_BOX_TILE_TOP
+    .endrepeat
+    .byte DIALOG_BOX_TILE_TR
+    .repeat 6
+    .byte DIALOG_BOX_TILE_LEFT
+    .repeat 15
+    .byte DIALOG_BOX_TILE_MIDDLE
+    .endrepeat
+    .byte DIALOG_BOX_TILE_RIGHT
+    .endrepeat
+    .byte DIALOG_BOX_TILE_BL
+    .repeat 15
+    .byte DIALOG_BOX_TILE_BOT
+    .endrepeat
+    .byte DIALOG_BOX_TILE_BR
 
 ; A = hitbox type, X = x, Y = y, sans_kind = anim kind; returns Y = hitbox idx
 sans_spawn:
