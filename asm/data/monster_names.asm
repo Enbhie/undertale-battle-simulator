@@ -13,8 +13,13 @@ monster_names_data:
     .byte "Froggit "
     .byte "Dummy   "
     .byte "Ember   "
+<<<<<<< HEAD
     .byte "Grasshop"
     .byte "Snake   "
+=======
+    .byte "Sans    "
+    .byte "XXXXXXXX"
+>>>>>>> ed263d6d4bbd1e9ada92b281ccc8ef517e2d94a7
     .byte "XXXXXXXX"
     .byte "XXXXXXXX"
     .byte "XXXXXXXX"

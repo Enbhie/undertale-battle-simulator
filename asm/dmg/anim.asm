@@ -1,4 +1,5 @@
 dmg_anim:
+    JSR sans_glide_update
 
     ; if fight_timer == 0
     LDA fight_timer
@@ -29,13 +30,14 @@ dmg_anim:
         LDA monster_stats + MonsterStat::hp + 1, X
         SBC #$00
         STA monster_stats + MonsterStat::hp + 1, X
+        ; Clear the strike state for both surviving and defeated monsters.
+        DEC fight_state
+        JSR sans_kill_check
         BCC @defeated
         ; call monster hit event
         mvx cur_monster_fight_pos, selected_monster
         LDA #EVENT::HIT
         STA monster_events, X
-        ; fight_state--
-        DEC fight_state
         ; fight_timer = 0
         mov fight_timer, #0
         ; switch to wait soul
@@ -50,6 +52,7 @@ dmg_anim:
         LDA #$00
         STA monster_stats + MonsterStat::hp, X
         STA monster_stats + MonsterStat::hp + 1, X
+<<<<<<< HEAD
         LDA boss_chain_stage
         BEQ @exit_battle
         CMP #$03
@@ -62,11 +65,20 @@ dmg_anim:
 
     @exit_battle:
         JMP begin_battle_exit
+=======
+        JSR kill_reward
+        JMP begin_battle_victory
+>>>>>>> ed263d6d4bbd1e9ada92b281ccc8ef517e2d94a7
 
 
     @init:
-        ; display strick anim
-        ; TODO
+        ; display strick anim (also played on a miss)
+        mov cur_monster_fight_pos, selected_monster
+        LDA #<ANIM_DATA_MONSTERS_STRIKE_STRIKE_1
+        STA tmp+0
+        LDA #>ANIM_DATA_MONSTERS_STRIKE_STRIKE_1
+        STA tmp+1
+        JSR add_anim
         ; dmg -> BCD
         mov tmp+0, fight_damage
         mov tmp+1, #0
@@ -84,6 +96,7 @@ dmg_anim:
     @number_anim:
         ; set CHR bank 0 to dmg sprites
         mov MMC5_CHR_BNK0, #DMG_SPRITE_BNK
+        JSR dmg_hpbar_update
         ; xy pos
         JSR monster_fightid_to_pos
         TXA
@@ -195,4 +208,60 @@ draw_digit:
 
     ; return
     pullregs
+    RTS
+
+
+; Sans slides out of the way (smooth 3 px steps) before the strike lands
+sans_glide_update:
+    LDA fight_id
+    CMP #$04
+    BNE @ret
+    ; keep the strike out of the CHR slot Sans' body shares
+    LDA #$01
+    STA sans_strk
+    LDA fight_damage
+    BNE @off
+    LDA fight_timer
+    CMP #12
+    BCC @up
+    CMP #40
+    BCC @hold
+    CMP #52
+    BCC @down
+    @off:
+    LDA #$00
+    STA sans_glide
+    @ret:
+    RTS
+    @up:
+    STA tmp
+    ASL
+    ADC tmp
+    JMP @set
+    @hold:
+    LDA #36
+    JMP @set
+    @down:
+    STA tmp
+    LDA #52
+    SEC
+    SBC tmp
+    STA tmp
+    ASL
+    ADC tmp
+    @set:
+    STA sans_gx
+    LDA #$01
+    STA sans_glide
+    RTS
+
+; Sans dies from the first real hit: clears carry (defeated) for fight 4 with damage
+sans_kill_check:
+    LDA fight_id
+    EOR #$04
+    BNE @keep
+    LDA fight_damage
+    BEQ @keep
+    CLC
+    @keep:
     RTS

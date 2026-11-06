@@ -1,7 +1,11 @@
 
 
+; 1 = Bandage, 2 = Monster Candy, 3 = Spider Donut, 4 = Cinnamon Pie
+default_inventory:
+.byte 1, 2, 2, 2, 2, 3, 4, 0
+
 default_player_stat:
-.byte 20, 20, 1, 1, 1, 0, 0, 0, 0, "TEST  "
+.byte 20, 20, 1, 1, 1, 0, 0, 0, 0, "FRISK "
 
 ;--------------------------------
 ; Subroutine: INIT
@@ -36,6 +40,26 @@ INIT:
         LDA default_player_stat, X
         STA player_stats, X
     to_x_dec @set_player, #-1
+
+    ; kill levels: LV = 1 + kills, max HP = 20 + 4 * kills
+    LDA kill_lv
+    BEQ @no_lv
+    CMP #11
+    BCC :+
+        LDA #10
+        STA kill_lv
+    :
+    CLC
+    ADC #$01
+    STA player_stats + PlayerStat::lv
+    LDA kill_lv
+    ASL
+    ASL
+    CLC
+    ADC #20
+    STA player_stats + PlayerStat::maxhp
+    STA player_stats + PlayerStat::hp
+    @no_lv:
     
     ; init graphics
     JSR init_pal
@@ -94,6 +118,7 @@ INIT:
     ; init packet_buffer_end
     sta_ptr packet_buffer_end, packet_buffer
 
+<<<<<<< HEAD
     JSR show_title_screen
     JSR choose_fight
     LDA fight_id
@@ -123,24 +148,44 @@ INIT:
         STA fight_id
         JSR load_fight
     @fight_ready:
+=======
+    ; show the landing page once per power-on, then restart init
+    LDA landing_done
+    BNE @landed
+        ; start a new run with Froggit (fight 2); winning moves on to Ember (fight 3)
+        mov fight_id, #$02
+        JSR run_landing
+        ; the landing page sets bit 1 of landing_done when the debug skip is pressed
+        LDA landing_done
+        AND #$02
+        BEQ :+
+            mov fight_id, #$04
+        :
+        LDA #$00
+        STA kill_lv
+        JMP INIT
+    @landed:
+
+    JSR load_fight
+>>>>>>> ed263d6d4bbd1e9ada92b281ccc8ef517e2d94a7
 
     ; update player UI
     mov player_flag, #PLAYER_FLAG_DRAW_HP + PLAYER_FLAG_DRAW_PLAYER
 
     ; set inventory
     for_x @inv, #INV_SIZE-1
-        TXA
+        LDA default_inventory, X
         STA player_inv, X
-        INC player_inv, X
     to_x_dec @inv, #-1
 
-    ; Init FamiStudio
-    LDX #7
+    ; Init FamiStudio: song 9 = "Enemy Approaching"
+    LDX #9
     JSR play_music
 
     RTS
 
 
+<<<<<<< HEAD
 show_title_screen:
     LDA #$01
     STA fight_id
@@ -283,3 +328,30 @@ title_screen_text:
     .res 4, $00
     .byte FONT_CHR_BNK, "A: START", $00
     .res 6, $00
+=======
+; Switch the $A000 window to the bank holding the title screen and run it.
+run_landing:
+    LDA mmc5_banks+2
+    PHA
+    LDA #<.bank(landing_main)+$80
+    STA mmc5_banks+2
+    STA MMC5_PRG_BNK1
+    JSR landing_main
+    PLA
+    STA mmc5_banks+2
+    STA MMC5_PRG_BNK1
+    RTS
+
+
+run_gameover:
+    LDA mmc5_banks+2
+    PHA
+    LDA #<.bank(gameover_main)+$80
+    STA mmc5_banks+2
+    STA MMC5_PRG_BNK1
+    JSR gameover_main
+    PLA
+    STA mmc5_banks+2
+    STA MMC5_PRG_BNK1
+    RTS
+>>>>>>> ed263d6d4bbd1e9ada92b281ccc8ef517e2d94a7

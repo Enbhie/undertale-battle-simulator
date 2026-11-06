@@ -388,19 +388,19 @@
 
     PACKET_DRAW_LIMIT = $48
 
-    MAX_MENU = 6
+    MAX_MENU = 8
 
     MAX_DIALOGBOX = 4
 
     HITMARK_TILE = $1E
     HITMARK_PLT = $00
 
-    INV_SIZE = 6
+    INV_SIZE = 8
 
     ITEM_NAME_SIZE = 16
     ITEM_NAME_SHIFT = 4
 
-    FIGHT_STRICK_TIME = 15*5
+    FIGHT_STRICK_TIME = 9*6
     FIGHT_NUMBER_TIME = 15*5
     DMG_SPRITE_BNK = (4*0)+2
 
@@ -632,4 +632,11 @@
     .enum HITBOX
         NONE
         FOLLOW_DIAMOND
+        FALL_DIAMOND
+        FROG
+        FLY
+        BONE_FALL
+        BONE_LEFT
+        BLOCK
+        DECOR
     .endenum

@@ -195,6 +195,9 @@
     cur_music_bank: .res 1
     cur_dpcm_bank: .res 1
 
+    ; nonzero once the landing page was shown (cleared on every reset)
+    landing_done: .res 1
+
     ;================
     ; Group: ZP - LZ variables
     ;================
@@ -414,6 +417,19 @@ OAM:
         monster_1: .tag MonsterStat
         monster_2: .tag MonsterStat
 
+        ; HP bar work variables
+        hpb_hp: .res 1
+        hpb_max: .res 1
+        hpb_acc: .res 2
+        hpb_cnt: .res 1
+        hpb_fill: .res 1
+        hpb_i: .res 1
+        hpb_e: .res 1
+        hpb_t: .res 1
+        hpb_cur: .res 1
+        hpb_target: .res 1
+        hpb_x: .res 1
+
         ; monster_vars in ZP
 
         ; Variable: monster_act_str
@@ -442,10 +458,15 @@ OAM:
         ; ID of the current fight.
         fight_id: .res 1
 
+<<<<<<< HEAD
         boss_chain_stage: .res 1
         boss_chain_round: .res 1
         boss_chain_anim_state: .res 1
         boss_chain_target_fight: .res 1
+=======
+        ; Kills so far in this run: each kill gives a level (+4 max HP). Spares give nothing.
+        kill_lv: .res 1
+>>>>>>> ed263d6d4bbd1e9ada92b281ccc8ef517e2d94a7
 
         ; Variable: cur_monster_fight_pos
         ;----------------
@@ -512,6 +533,8 @@ OAM:
 
         menu_idx: .res 1
         menu_size: .res 1
+        ; 1 = the menu is split in pages of 4 entries (item menu)
+        menu_paged: .res 1
         menu_list_lo: .res MAX_MENU
         menu_list_hi: .res MAX_MENU
         menu_list_pos_x: .res MAX_MENU
@@ -593,8 +616,31 @@ OAM:
         hitbox_h :.res MAX_HITBOX
         hitbox_a :.res MAX_HITBOX
 
+        ; Froggit fly attack state
+        fly_pause: .res 1
+        fly_count: .res 1
+        fly_pat: .res 1
+        fly_t: .res 1
+        scene_kind: .res 1
+
+        ; Sans fight state
+        sans_kind: .res 1
+        sans_x: .res 1
+        sans_y: .res 1
+        sans_turns: .res 1
+        sans_glide: .res 1
+        sans_off: .res 1
+        sans_strk: .res 1
+        sans_gx: .res 1
+        sans_gf: .res 1
+        sans_final_phase: .res 1
+        sans_final_repeat: .res 1
+        sans_hbone_prev: .res 2
+        sans_hbone_now: .res 2
+        sans_hbone_dirty: .res 2
+
         ; padding
-        .res MAX_HITBOX*2
+        .res MAX_HITBOX*2-22
 
     img_buf: .res 512
 

@@ -86,17 +86,27 @@ data: FORCE
 	python py/csv/name2asm.py data/names.csv -o asm/data/monster_names.asm
 	python py/csv/stats2asm.py data/stats.csv -o asm/data/monster_stats.asm
 
-	python py/buildcode.py data/monsters -o asm/data
-
 	python py/txtEncode/buildtxt.py data/monsters -to asm/data/txt.bin -co asm/data/txt_const.asm
 	python py/txtEncode/lz_encode_block.py asm/data/txt.bin -o asm/data/txt.bin -a asm/data/txt_data.asm
 
 	python py/anim/bw_bkgimg2chr.py data/monsters -d asm/data/img_bkg.bin -b 16 -cf asm/data/img_bkg_const.asm -c data/BKGANIM.chr
-	python py/anim/bw_sprimg2chr.py data/monsters -d asm/data/img_spr.bin -b 64 -bs data/BKGANIM.chr -cf asm/data/img_spr_const.asm -c data/SPRANIM.chr
+# Reserve 1KB banks starting at 128 for color sprites; do not overlap scene banks.
+	python py/anim/bw_sprimg2chr.py data/monsters -d asm/data/img_spr.bin -b 64 -bs data/BKGANIM.chr -cf asm/data/img_spr_const.asm -c data/SPRANIM.chr -cc data/COLORSPRANIM.chr -cb 128
 	python py/merge_chr.py -o data/TMP.chr data/BKGANIM.chr data/SPRANIM.chr -p 0
 	python py/anim/bkgimg2chr.py data/monsters -d asm/data/img_bkg_cl.bin -b 16 -bs data/TMP.chr -cf asm/data/img_bkg_cl_const.asm -c data/BKGCLANIM.chr
 	python py/merge_chr.py -o Undertale.chr data/BASE.chr data/TMP.chr data/BKGCLANIM.chr
+	python py/hpbar_chr.py
+	python py/landing_logo.py
+	python py/kill_img.py
+	python py/spare_img.py
+	python py/gameover_img.py
+	python py/sans_img.py
+	python py/sans_beam_img.py
+	python py/sans_rotate_img.py
+	python py/sans_hbone_img.py
+	python py/anim/patch_color_chr.py Undertale.chr data/COLORSPRANIM.chr 128
 	python py/anim/buildanim.py data/monsters -a asm/data/anim_data.asm -c asm/data/anim_const.asm
+	python py/buildcode.py data/monsters -o asm/data
 
 img:
 	python py/bin2img.py $(GAME_NAME).nes nesfile.png NES 2048

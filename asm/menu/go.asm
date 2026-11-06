@@ -49,6 +49,12 @@ menu_go_item_choice:
 
 
 menu_go_flee:
+    ; fleeing returns to the landing page
+    LDA battle_exit_state
+    BNE :+
+    LDA #$00
+    STA landing_done
+:
     JMP begin_battle_exit
 
 
@@ -74,12 +80,16 @@ menu_go_item:
         ; menu_size++
         INC menu_size
 
-        ; menu_list_pos_x[X] = menu_data_pos_x[X]
-        LDA menu_data_pos_x, X
+        ; position inside the page (4 entries per page)
+        phy
+        TXA
+        AND #$03
+        TAY
+        LDA menu_data_pos_x, Y
         STA menu_list_pos_x, X
-        ; menu_list_pos_y[X] = menu_data_pos_y[X]
-        LDA menu_data_pos_y, X
+        LDA menu_data_pos_y, Y
         STA menu_list_pos_y, X
+        ply
 
         ; menu_list[X] = menu_go_item_choice
         LDA #<menu_go_item_choice
@@ -112,6 +122,8 @@ menu_go_item:
     STA MMC5_PRG_BNK0
 
     ; if no item
+    LDA #$01
+    STA menu_paged
     LDA menu_size
     BNE :+
         ; cancel menu & return
@@ -147,6 +159,9 @@ menu_go_act_monster:
     :
     ; menu_size = act size
     STA menu_size
+    LDA #$00
+    STA menu_paged
+    LDA menu_size
 
     ; tmp = monster_act_str[X]
     TXA
@@ -243,9 +258,41 @@ menu_go_mercy:
         CPX #$02
         BNE @spare
 
-    ; draw the menu
-    JMP draw_menu
+    ; draw the menu, then the first N letters of "Spare" in yellow (N = listens, flag bits 1-3)
+    JSR draw_menu
+    LDA monster_flags+0
+    AND #MONSTER_FLAG_SPARE
+    BNE @partial_end
+    LDA monster_flags+0
+    LSR
+    AND #$07
+    BEQ @partial_end
+    TAX
+    LDA #FONT_CHR_BNK+1
+    STA menu_list_str+$50
+    LDY #$00
+    @letters:
+        LDA menu_spare_word, Y
+        STA menu_list_str+$51, Y
+        INY
+        DEX
+        BNE @letters
+    LDA #$00
+    STA menu_list_str+$51, Y
+    LDA menu_list_pos_x+0
+    CLC
+    ADC #16
+    STA menu_list_pos_x+5
+    LDA menu_list_pos_y+0
+    STA menu_list_pos_y+5
+    LDX #$05
+    JMP draw_menu_str
+    @partial_end:
+    RTS
 
+
+menu_spare_word:
+    .byte "Spare"
 
 menu_go_act:
     sta_ptr tmp, menu_go_act_monster
