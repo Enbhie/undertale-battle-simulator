@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111318">
+  <title>Undertale Battle Simulator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #111318;
+      color: #f5f5f5;
+    }
+
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+    }
+
+    p {
+      color: #c4c7d0;
+      line-height: 1.6;
+    }
+
+    #game {
+      width: 100%;
+      min-height: 480px;
+      margin-top: 20px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid #444854;
+      border-radius: 12px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 24px 12px;
+      }
+
+      #game {
+        min-height: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Undertale Battle Simulator</h1>
+    <p>Click the game screen to play. Use the emulator's on-screen controls or configure a keyboard/gamepad in its menu.</p>
+    <div id="game" aria-label="NES game player"></div>
+  </main>
+
+  <script>
+    window.EJS_player = "#game";
+    window.EJS_core = "nes";
+    window.EJS_gameName = "Undertale Battle Simulator";
+    window.EJS_gameUrl = new URL("./Undertale.nes", document.baseURI).href;
+    window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+  </script>
+  <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
+</body>
+</html>
