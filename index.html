@@ -62,13 +62,13 @@
 <body>
   <main>
     <h1>Undertale Battle Simulator</h1>
-    <p>Click <strong>Start Game</strong> in the player to begin. Use the on-screen controls, or open Control Settings to configure your keyboard or gamepad.</p>
+    <p>Click <strong>Start Game</strong> to launch the NES game, then follow its in-game prompts and encounter progression. Use the on-screen controls, or open Control Settings to configure your keyboard or gamepad.</p>
     <div id="game" aria-label="NES game player"></div>
   </main>
 
   <script>
     window.EJS_player = "#game";
-    window.EJS_core = "nestopia";
+    window.EJS_core = "nes";
     window.EJS_gameName = "Undertale Battle Simulator";
     window.EJS_gameUrl = new URL("./Undertale.nes", document.baseURI).href;
     window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
