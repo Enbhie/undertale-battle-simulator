@@ -1773,14 +1773,6 @@ landing_main:
         STA player_y
         JSR draw_player
 
-        ; debug: SELECT or B skips to the Sans fight
-        LDA btn_1
-        AND #(BTN_SELECT+BTN_B)
-        BEQ :+
-            LDA #$02
-            STA landing_done
-            BNE @go
-        :
         LDA btn_1
         AND #(BTN_START+BTN_A)
         BEQ @frame
@@ -1806,7 +1798,7 @@ landing_main:
         AND #(BTN_START+BTN_A)
         BNE @release
 
-    ; bit 1 of landing_done = debug skip to Sans
+    ; Mark the landing screen as complete.
     LDA landing_done
     ORA #$01
     STA landing_done
